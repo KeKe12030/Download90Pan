@@ -8,8 +8,8 @@ import java.util.Queue;
 
 import org.eclipse.jetty.util.BlockingArrayQueue;
 
-public class DownloadSourceThread implements Runnable{
-	private Queue<String[]> sourceDownloadUrl = null;
+public class DownloadSourceThread{
+	public Queue<String[]> sourceDownloadUrl = null;
 	private String path = "";
 	
 
@@ -66,24 +66,4 @@ public class DownloadSourceThread implements Runnable{
 		}
 	}
 
-	@Override
-	public void run() {
-		while(true) {
-			try {
-				Thread.sleep(100);//防止线程卡死
-			} catch (InterruptedException e) {
-				// TODO 自动生成的 catch 块
-				e.printStackTrace();
-			}
-			
-			if(sourceDownloadUrl.size() > 0) {//判断是否有任务提交
-				for(int i=0;i<sourceDownloadUrl.size();i++) {
-					String[] infos = sourceDownloadUrl.poll();
-					System.out.println(downloadSource(infos[0], infos[1]) ? infos[0]+"下载成功 √" : infos[0]+"下载失败 ×");
-
-				}
-			}
-		}
-
-	}
 }

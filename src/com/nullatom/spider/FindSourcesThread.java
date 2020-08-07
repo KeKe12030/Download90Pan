@@ -16,7 +16,7 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
-public class FindSourcesThread implements Runnable{
+public class FindSourcesThread{
 	private WebDriver driver = null;
 //	private WebDriverWait wait = null;
 	private static String url = "";
@@ -34,10 +34,25 @@ public class FindSourcesThread implements Runnable{
 		this.pageNum = pageNum;
 		
 		//开启下载线程
-		
 		downloadSourceThread = new DownloadSourceThread(path);
-		Thread downloadThread = new Thread(downloadSourceThread);
-		downloadThread.start();
+		new Thread(()->{
+			while(true) {
+				try {
+					Thread.sleep(100);//防止线程卡死
+				} catch (InterruptedException e) {
+					// TODO 自动生成的 catch 块
+					e.printStackTrace();
+				}
+
+				if(downloadSourceThread.sourceDownloadUrl.size() > 0) {//判断是否有任务提交
+					for(int i=0;i<downloadSourceThread.sourceDownloadUrl.size();i++) {
+						String[] infos = downloadSourceThread.sourceDownloadUrl.poll();
+						System.out.println(downloadSourceThread.downloadSource(infos[0], infos[1]) ? infos[0]+"下载成功 √" : infos[0]+"下载失败 ×");
+
+					}
+				}
+			}
+		}).start();
 		
 		
 		//固定时间等待：driver.manage().timeouts().implicitlyWait(60, TimeUnit.SECONDS);
@@ -91,17 +106,6 @@ public class FindSourcesThread implements Runnable{
 					System.out.println("获取并且已提交到名称为："+apkName+"的资源的下载任务！\n下载连接："+a.getAttribute("href").substring(0,20)+"......");
 				}
 			}
-	}
-	
-	
-	@Override
-	public void run() {
-		
-		//从页面开始寻找下载链接，并且获取下载链接直链，提交到下载任务
-		
-		findDownloadPageUrls();
-		
-		
 	}
 	
 	
