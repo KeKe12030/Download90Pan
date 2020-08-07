@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
+import java.util.concurrent.TimeUnit;
 
 import org.jsoup.Connection;
 import org.jsoup.Jsoup;
@@ -18,7 +19,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 
 public class FindSources{
 	private WebDriver driver = null;
-//	private WebDriverWait wait = null;
+	private WebDriverWait wait = null;
 	private static String url = "";
 	private static int pageNum = 1;
 	private DownloadSource downloadSource = null;
@@ -32,38 +33,35 @@ public class FindSources{
 	public FindSources(String url , int pageNum,String path){
 		this.url = url;
 		this.pageNum = pageNum;
-		
+
 		//开启下载线程
 		downloadSource = new DownloadSource(path);
-		new Thread(()->{
-			while(true) {
-				try {
-					Thread.sleep(100);//防止线程卡死
-				} catch (InterruptedException e) {
-					// TODO 自动生成的 catch 块
-					e.printStackTrace();
-				}
+		for(int j=0;j<5;j++) {
+			new Thread(()->{
+				while(true) {
+					try {
+						Thread.sleep(100);//防止线程卡死
+					} catch (InterruptedException e) {
+						// TODO 自动生成的 catch 块
+						e.printStackTrace();
+					}
 
-				if(downloadSource.sourceDownloadUrl.size() > 0) {//判断是否有任务提交
-					for(int i=0;i<downloadSource.sourceDownloadUrl.size();i++) {
-						String[] infos = downloadSource.sourceDownloadUrl.poll();
-						System.out.println(downloadSource.downloadSource(infos[0], infos[1]) ? infos[0]+"下载成功 √" : infos[0]+"下载失败 ×");
+					if(downloadSource.sourceDownloadUrl.size() > 0) {//判断是否有任务提交
+						for(int i=0;i<downloadSource.sourceDownloadUrl.size();i++) {
+							String[] infos = downloadSource.sourceDownloadUrl.poll();
+							System.out.println(downloadSource.downloadSource(infos[0], infos[1]) ? infos[0]+"下载成功 √" : infos[0]+"下载失败 ×");
 
+						}
 					}
 				}
-			}
-		}).start();
-		
-		
-		//固定时间等待：driver.manage().timeouts().implicitlyWait(60, TimeUnit.SECONDS);
+			}).start();
+		}
+
+
+		//		固定时间等待：driver.manage().timeouts().implicitlyWait(60, TimeUnit.SECONDS);
 		//设定最大等待时间，一旦标签存在即可返回：wait.until(ExpectedConditions.presenceOfElementLocated(By.cssSelector(".abc")))
 		driver = new ChromeDriver(); // 新建一个WebDriver 的对象，但是new 的是谷歌的驱动
-//		wait = new WebDriverWait(driver, 10, 1);
-//		try {
-//			wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[@id='go']")));
-//		}catch(Exception e) {
-//			
-//		}
+		driver.manage().timeouts().pageLoadTimeout(100, TimeUnit.SECONDS);
 	}
 	/**
 	 * URL必须是："https://www.90pan.com/o10001&pg=" 的形式
@@ -71,7 +69,7 @@ public class FindSources{
 	 * 
 	 * */
 	public void findDownloadPageUrls(){
-		for(int i =1;i<=pageNum;i++) {
+		for(int i =7;i<=pageNum;i++) {
 			Connection con = Jsoup.connect(url+i);
 			try {
 				Elements elements = con.get().getElementsByClass("pull-left");
@@ -90,25 +88,31 @@ public class FindSources{
 		}
 		System.out.println("所有下载均已完成！");
 	}
-	
+
 	public void sourceDownload(String url){
 		//获取到了当前页数的所有APK
-			driver.get(url); // 打开指定的网站
-			String apkName = driver.findElement(By.className("span9")).findElement(By.tagName("h1")).getText();
-			//		        driver.quit();// 退出浏览器
-			WebElement goId = driver.findElement(By.id("go"));
-			List<WebElement> atags = goId.findElements(By.tagName("a"));
-			for(WebElement a : atags) {
-				if(a.findElement(By.className("txt")).getText().contains("普通下载")) {
-					
-					downloadSource.addSource(apkName,a.getAttribute("href"));
-					
-					System.out.println("获取并且已提交到名称为："+apkName+"的资源的下载任务！\n下载连接："+a.getAttribute("href").substring(0,20)+"......");
-				}
+		driver.get(url); // 打开指定的网站
+		try {
+			Thread.sleep(2000);
+		} catch (InterruptedException e) {
+			// TODO 自动生成的 catch 块
+			e.printStackTrace();
+		}
+		String apkName = driver.findElement(By.className("span9")).findElement(By.tagName("h1")).getText();
+		//		        driver.quit();// 退出浏览器
+		WebElement goId = driver.findElement(By.id("go"));
+		List<WebElement> atags = goId.findElements(By.tagName("a"));
+		for(WebElement a : atags) {
+			if(a.findElement(By.className("txt")).getText().contains("普通下载")) {
+
+				downloadSource.addSource(apkName,a.getAttribute("href"));
+
+				System.out.println("获取并且已提交到名称为："+apkName+"的资源的下载任务！\n下载连接："+a.getAttribute("href").substring(0,20)+"......");
 			}
+		}
 	}
-	
-	
-	
+
+
+
 
 }

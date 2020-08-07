@@ -9,7 +9,7 @@ import java.util.Queue;
 import org.eclipse.jetty.util.BlockingArrayQueue;
 
 public class DownloadSource{
-	public Queue<String[]> sourceDownloadUrl = null;
+	public BlockingArrayQueue<String[]> sourceDownloadUrl = null;
 	private String path = "";
 	
 
